@@ -1,16 +1,24 @@
-from flask import Flask, jsonify, request
-import requests
+from flask import Flask, Response, jsonify, request
+import io
+import nlpnet
+import nltk
 import pandas as pd
 import re
-import nltk
-import nlpnet
-import time
-from helpers import *
+import requests
 import sys
+from flask_cors import CORS
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from urllib.parse import unquote
+from helpers import *
+import time
+
+import matplotlib.pyplot as plt
+
 
 # print("test", file=sys.stderr)
 
 app = Flask(__name__)
+CORS(app)
 BASE_GOV_URL = 'https://dados.gov.br/dados/api/publico/conjuntos-dados'
 
 
@@ -160,6 +168,8 @@ def setup(user_input):
         # TODO - tratar os possíveis erros
         df_final = clean(df_final)
 
+        df_final = df_final.drop_duplicates(subset=["url"])
+
         fim = time.time()
         print('duracao: %f segundos' % (fim - inicio), file=sys.stderr)
 
@@ -191,34 +201,38 @@ def get_datasets():
 
 @app.route("/select_dataset", methods=["GET"])
 def select_dataset():
-    # TODO - tratar o requisito da seleção ser feita em banco
-    selected_index = int(request.args.get('selected_index'))
-    tags_final = request.args.get('tags_final')
-    nltk.download('punkt')
-    nltk.download('stopwords')
-    df_final = setup(tags_final)
-
-    selected = selectRow(df_final, selected_index)
-    df_csv = getCsv(selected["url"])
+    selected_url = unquote(request.args.get('selected_url'))
+    df_csv = getCsv(selected_url)
     return jsonify(df_csv.columns.to_list())
 
 @app.route("/select_columns", methods=["GET"])
 def select_columns():
-    # TODO - tratar o requisito da seleção ser feita em banco
-    selected_index = int(request.args.get('selected_index'))
-    tags_final = request.args.get('tags_final')
-    nltk.download('punkt')
-    nltk.download('stopwords')
-    df_final = setup(tags_final)
-    selected = selectRow(df_final, selected_index)
-    df_csv = getCsv(selected["url"])
+    selected_url = unquote(request.args.get('selected_url'))
+    df_csv = getCsv(selected_url)
 
-    selected_column1 = request.args.get('selected_column1')
-    selected_column2 = request.args.get('selected_column2')
-    arr_column1 = df_csv[selected_column1].values
-    arr_column2 = df_csv[selected_column2].values
-    df_filter = pd.DataFrame({selected_column1: arr_column1, selected_column2: arr_column2})
-    return jsonify(df_filter.to_json(orient="split"))
+    dimension = request.args.get('dimension')
+    metric = request.args.get('metric')
+    arr_dimension = df_csv[dimension].values
+    arr_metric = df_csv[metric].values
+    df = pd.DataFrame({dimension: arr_dimension, metric: arr_metric}).groupby([dimension]).count().reset_index()
+    df = df.rename(columns={metric: 'Quantidade'})
+    metric = 'Quantidade'
+    output = plot_graph(df, dimension, metric)
+    return Response(output.getvalue(), mimetype='image/png')
+    # return jsonify(df.to_json(orient="split"))
+
+def plot_graph(df, dimension, metric):
+    fig, axis = plt.subplots()
+    axis.plot(df[dimension], df[metric], marker = 'o')
+    axis.set_xticks(df[dimension])
+    axis.set_yticks(df[metric])
+    # set title of matplotlib plot
+    plt.title(f"{metric} por {dimension}")
+    plt.xlabel(dimension)
+    plt.ylabel(metric)
+    output = io.BytesIO()
+    FigureCanvas(fig).print_png(output)
+    return output
 
 @app.route("/test", methods=["GET"])
 def test():

@@ -1,0 +1,5 @@
+{
+    "scripts": {
+        "heroku-prebuild": "pip install numpy==1.21.6"
+    }
+}

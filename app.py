@@ -44,7 +44,8 @@ def getRepos(palavra):
         params = {
             'isPrivado': 'false',
             'pagina': pagina + 1,
-            'nomeConjuntoDados': palavra  
+            'nomeConjuntoDados': palavra,
+            'idOrganizacao': '05690c77-cf2c-4a9c-bb58-99827b9a9590'
         }
         resp = makeGovRequest(BASE_GOV_URL, params)
         if len(resp) == 0:

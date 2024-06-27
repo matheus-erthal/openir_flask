@@ -13,7 +13,9 @@ from helpers import *
 import time
 
 import matplotlib.pyplot as plt
+from dotenv import load_dotenv
 
+load_dotenv()
 
 # print("test", file=sys.stderr)
 

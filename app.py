@@ -169,7 +169,7 @@ def setup(user_input):
 
         df_final = getDataframes(tags_final)
         # TODO - tratar os possíveis erros
-        df_final = clean(df_final)
+        # df_final = clean(df_final)
 
         df_final = df_final.drop_duplicates(subset=["url"])
 

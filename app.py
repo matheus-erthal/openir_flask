@@ -89,6 +89,7 @@ def getDataframes(tags_final):
                     df = df.reset_index(drop=True)
 
                     # Refinando o dataframe para conter apenas os dados que realmente possuem o termo desejado (regex)
+                    frase = ''
                     for index, row in df.iterrows():
                         if row["nome"]:
                             if not row["nome"].isalpha():
@@ -152,14 +153,14 @@ def clean(df_final):
 
 def setup(user_input):
     if user_input:
-        tagger = nlpnet.POSTagger('pos-pt', language='pt')
-        tags = tagger.tag(user_input)
-        tags_final = []
+        # tagger = nlpnet.POSTagger('pos-pt', language='pt')
+        # tags = tagger.tag(user_input)
+        # tags_final = []
 
-        for item in convert(tags):
-            for i in item:
-                if i[1] == 'N':
-                    tags_final.append(i[0])
+        # for item in convert(tags):
+        #     for i in item:
+        #         if i[1] == 'N':
+        #             tags_final.append(i[0])
 
         # # Ignorando os warnings
         # warnings.filterwarnings("ignore")
@@ -167,9 +168,9 @@ def setup(user_input):
 
         inicio = time.time()
 
-        df_final = getDataframes(tags_final)
+        df_final = getDataframes([user_input])
         # TODO - tratar os possíveis erros
-        # df_final = clean(df_final)
+        df_final = clean(df_final)
 
         df_final = df_final.drop_duplicates(subset=["url"])
 
